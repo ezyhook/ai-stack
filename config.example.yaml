@@ -1,0 +1,20 @@
+# lumo-tamer configuration template.
+# install.sh copies this to config.yaml and substitutes the API key.
+# All options: lumo-tamer/config.defaults.yaml (do not edit that file).
+
+server:
+  apiKey: "__LUMO_API_KEY__"
+
+  # Lumo's native web search (plus weather, stocks, crypto)
+  enableWebSearch: true
+
+  # Let Lumo call tools supplied by Open WebUI (needed for Open Terminal).
+  # Experimental in lumo-tamer: tool calls may fail.
+  customTools:
+    enabled: true
+
+  # Tier when the request does not specify one: auto | lumo-lite | lumo-max
+  defaultModelTier: "auto"
+
+log:
+  level: "info"
