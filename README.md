@@ -35,7 +35,7 @@ sudo loginctl enable-linger <пользователь>
 Затем:
 
 ```bash
-git clone https://github.com/<you>/ai-stack.git
+git clone https://github.com/ezyhook/ai-stack.git
 cd ai-stack
 ./install.sh
 ```
