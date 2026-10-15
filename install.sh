@@ -190,6 +190,17 @@ else
   else
     ok "config.yaml уже есть, ключ совпадает с .env"
   fi
+  # settings required for Open Terminal tool calls
+  if ! grep -Eq '^[[:space:]]+customTools:' config.yaml \
+     || ! grep -A2 -E '^[[:space:]]+customTools:' config.yaml | grep -Eq 'enabled:[[:space:]]*true'; then
+    warn "В config.yaml не включён server.customTools.enabled: true — Lumo не сможет вызывать терминал"
+  fi
+  if ! grep -Eq 'injectInto:[[:space:]]*"?last"?' config.yaml; then
+    warn "В config.yaml нет server.instructions.injectInto: \"last\" — Lumo может «забывать» про терминал (см. config.example.yaml)"
+  fi
+  if grep -Eq 'messageContent:[[:space:]]*true' config.yaml; then
+    warn "В config.yaml включён log.messageContent: в лог пишется вся переписка"
+  fi
 fi
 chmod 600 config.yaml
 umask 022
@@ -249,9 +260,9 @@ ${C_B}Готово.${C_0}
     ssh -N -L 8080:127.0.0.1:8080 <пользователь>@${HOST_HINT}
   и откройте http://localhost:8080 — первая зарегистрированная учётка станет администратором.
 
-  Подключение терминала: Admin Panel → Settings → Integrations → Open Terminal
-    URL:     http://open-terminal:8000
-    API Key: значение OPEN_TERMINAL_API_KEY из ${STACK_DIR}/.env
+  Open Terminal подключается автоматически (Admin Panel → Settings → Integrations → Open Terminal).
+  Проверка: новый чат → «Выполни ls -la ~ в терминале».
+  Ключ терминала, если понадобится: OPEN_TERMINAL_API_KEY в ${STACK_DIR}/.env
 
   Полезное:
     podman compose logs -f tamer

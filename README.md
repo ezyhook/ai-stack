@@ -69,10 +69,9 @@ ssh -N -L 8080:127.0.0.1:8080 user@server
 
 ## Подключение терминала
 
-В Open WebUI откройте **Admin Panel → Settings → Integrations → Open Terminal**. Нужен именно этот раздел, а не Tools.
+Делать ничего не нужно: Open Terminal подключается к Open WebUI автоматически для всех пользователей через переменную `TERMINAL_SERVER_CONNECTIONS` в `compose.yml`. Подключение видно в **Admin Panel → Settings → Integrations → Open Terminal**.
 
-- URL: `http://open-terminal:8000`
-- API Key: `OPEN_TERMINAL_API_KEY` из `.env`
+Проверка: в **новом** чате попросите «Выполни `ls -la ~` в терминале и покажи результат».
 
 Работать с терминалом напрямую:
 
@@ -80,13 +79,28 @@ ssh -N -L 8080:127.0.0.1:8080 user@server
 podman exec -it open-terminal bash
 ```
 
-> Инструменты (tool calling) в lumo-tamer пока экспериментальные: Lumo может ошибаться в вызовах команд.
+> Инструменты (tool calling) в lumo-tamer пока экспериментальные: Lumo может ошибаться в вызовах команд и неточно пересказывать их вывод.
+
+## Что настроено для работы терминала
+
+| Где | Настройка | Зачем |
+|---|---|---|
+| `config.yaml` | `server.customTools.enabled: true` | без неё lumo-tamer отбрасывает инструменты Open WebUI |
+| `config.yaml` | `server.instructions.injectInto: "last"` | описание инструментов уходит в каждом запросе; при `"first"` Lumo «забывает» про терминал |
+| `compose.yml` | `TERMINAL_SERVER_CONNECTIONS` | терминал подключён сразу, ручная настройка не нужна |
+| `compose.yml` | `ENABLE_TITLE/TAGS/FOLLOW_UP/AUTOCOMPLETE_GENERATION=false` | фоновые запросы Open WebUI не расходуют лимит Lumo |
+| `compose.yml` | `ENABLE_OLLAMA_API=false` | нет ошибок подключения к несуществующему Ollama |
+| модель в Open WebUI | Function Calling: **Native** (по умолчанию с v0.10) | инструменты передаются в поле `tools`, которое понимает lumo-tamer |
+
+`install.sh` проверяет существующий `config.yaml` и предупреждает, если первых двух настроек нет.
+
+**Обновление существующей установки.** Флаги `ENABLE_*_GENERATION` и `ENABLE_OLLAMA_API` Open WebUI читает из переменных только при первом запуске, а дальше берёт из своей базы. На уже работающей установке выключите их вручную в **Admin Panel → Settings → Interface** и **Connections**. `TERMINAL_SERVER_CONNECTIONS` применяется при каждом запуске. Если терминал после обновления показан дважды, удалите тот, что добавляли вручную.
 
 Советы:
 
 - Просите конкретное действие («выполни `ls -la ~`»), а не «есть ли у тебя терминал?».
 - Если Lumo отвечает, что терминала нет, начните **новый** чат: старая история тянет модель к прежнему ответу.
-- Отключите фоновые запросы Open WebUI (**Admin Panel → Settings → Interface**: Follow-Up, Title и Tags Generation). Каждый такой запрос уходит в Lumo и расходует лимит.
+- Для отладки включите в `config.yaml` `log.level: debug`. Успешный вызов в `podman compose logs -f tamer` выглядит как `Tool call detected`, промах — как `Bouncing misrouted tool call`.
 
 ## Повседневные команды
 
@@ -128,6 +142,8 @@ podman compose down                       # остановить (данные �
 export XDG_RUNTIME_DIR=/run/user/$(id -u)
 export DBUS_SESSION_BUS_ADDRESS=unix:path=$XDG_RUNTIME_DIR/bus
 ```
+
+**Lumo отвечает «терминала у меня нет».** Проверьте две настройки из таблицы выше в `config.yaml`, выполните `podman compose restart tamer` и начните новый чат.
 
 **`config.yaml is a directory`.** Podman создал каталог на месте отсутствующего файла. Удалите его (`rm -rf config.yaml`) и запустите `./install.sh` ещё раз.
 
