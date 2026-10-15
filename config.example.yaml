@@ -13,6 +13,12 @@ server:
   customTools:
     enabled: true
 
+  # Re-inject tool instructions into every request (default "first" injects
+  # only into the first message, so Lumo "forgets" the tools in longer chats
+  # or in chats started before the terminal was connected).
+  instructions:
+    injectInto: "last"
+
   # Tier when the request does not specify one: auto | lumo-lite | lumo-max
   defaultModelTier: "auto"
 
